@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Wolverine\Wolverine.csproj" />
+        <ProjectReference Include="..\..\..\Transports\Grpc\Wolverine.Grpc\Wolverine.Grpc.csproj" />
+        <ProjectReference Include="..\Messages\Messages.csproj" />
+    </ItemGroup>
+
+</Project>

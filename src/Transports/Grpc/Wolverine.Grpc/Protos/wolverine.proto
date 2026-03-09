@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+option csharp_namespace = "Wolverine.Transports.Grpc.Internal";
+
+package wolverine.grpc;
+
+// WolverineGrpc is the gRPC service definition for Wolverine's gRPC transport.
+// It enables direct service-to-service message passing using high-performance
+// binary framing (protobuf envelope wrapping Wolverine's native serialized bytes).
+service WolverineGrpc {
+    // Send delivers one batch of serialized Wolverine envelopes to the remote node.
+    rpc Send(EnvelopeRequest) returns (Ack);
+
+    // Ping is used for connectivity checks and liveness probes.
+    rpc Ping(PingRequest) returns (Ack);
+}
+
+// EnvelopeRequest carries the raw bytes produced by Wolverine's EnvelopeSerializer.
+// Using the native serializer keeps the protocol simple and avoids a second
+// serialization layer while still benefiting from gRPC's HTTP/2 transport.
+message EnvelopeRequest {
+    bytes data = 1;
+}
+
+// Ack is returned by the server after processing a Send or Ping request.
+message Ack {
+    bool success = 1;
+    string error  = 2;
+}
+
+// PingRequest is an empty sentinel for liveness probes.
+message PingRequest {}
