@@ -68,14 +68,22 @@ simple protobuf message (`EnvelopeRequest { bytes data = 1; }`). This means:
 ## Configuration API
 
 ```csharp
-// Listen for incoming gRPC messages
+// Listen for incoming plain gRPC messages
 opts.ListenForGrpcMessages(port: 5581);
 
-// Send messages to a remote gRPC endpoint
+// Listen with TLS (grpcs://)
+opts.ListenForSecureGrpcMessages(port: 5443, certificate: myCert); // explicit cert
+opts.ListenForSecureGrpcMessages(port: 5443);                      // dev cert fallback
+
+// Send messages to a remote plain gRPC endpoint
 opts.PublishMessage<Ping>().ToGrpcEndpoint("remote-host", port: 5581);
+
+// Send messages to a remote TLS gRPC endpoint
+opts.PublishMessage<Ping>().ToSecureGrpcEndpoint("remote-host", port: 5443);
 
 // Fluent builder style
 opts.UseGrpcTransport()
-    .ListenOnPort(5581)
-    .SendTo("remote-host", 5582);
+    .ListenOnPort(5581)                    // plain listener
+    .ListenOnPortWithTls(5443)             // TLS listener (dev cert)
+    .SendToWithTls("remote-host", 5443);   // TLS sender
 ```

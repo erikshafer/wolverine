@@ -135,6 +135,44 @@ opts.PublishAllMessages().ToGrpcEndpoint("svc-b");          // port 5000
 opts.PublishAllMessages().ToGrpcEndpoint("svc-b", 9090);    // explicit port
 ```
 
+## TLS / HTTPS (`grpcs://`)
+
+The `WolverineFx.Grpc` transport has first-class TLS support via the `grpcs://` URI scheme.
+
+### Listening with TLS
+
+```csharp
+using System.Security.Cryptography.X509Certificates;
+using Wolverine;
+using Wolverine.Transports.Grpc;
+
+// Option A: Provide your own certificate (recommended for production)
+var cert = X509Certificate2.CreateFromPemFile("server.crt", "server.key");
+opts.ListenForSecureGrpcMessages(port: 5443, certificate: cert);
+
+// Option B: Let Kestrel use the ASP.NET Core dev cert (development only)
+opts.ListenForSecureGrpcMessages(port: 5443);
+```
+
+### Sending with TLS
+
+```csharp
+// Via ToSecureGrpcEndpoint (grpcs:// scheme)
+opts.PublishMessage<Ping>().ToSecureGrpcEndpoint("remote-service", port: 5443);
+
+// Or via the fluent builder
+opts.UseGrpcTransport()
+    .ListenOnPortWithTls(5443)            // listener with dev cert
+    .SendToWithTls("remote-service", 5443); // sender using https://
+```
+
+::: tip Certificate trust for the sender
+The gRPC channel on the sender side uses the system certificate store for validation.
+If the remote service uses a self-signed or dev certificate, either:
+- Trust the certificate at the OS/container level (`dotnet dev-certs https --trust`)
+- Or terminate TLS at a load balancer/service mesh that presents a trusted certificate
+:::
+
 ## Bidirectional ping/pong example
 
 The most natural pattern for the gRPC transport is direct **request/reply** between two services. Here is an
@@ -246,9 +284,11 @@ grpc://{host}:{port}
 For example: `grpc://payments-service:5000`, `grpc://localhost:9090`.
 
 ::: warning TLS / HTTPS
-The current implementation connects with plain HTTP/2 (`http://`). TLS support (`grpcs://`) is planned for a
-future iteration. Do not use this transport over untrusted networks without additional security (e.g., a
-service mesh with mTLS).
+The `grpcs://` scheme uses TLS (HTTP/2 over HTTPS). For the listener, a certificate must be
+supplied via `ListenForSecureGrpcMessages(port, certificate)` or `ListenOnPortWithTls(port, certificate)`;
+when no certificate is provided Wolverine falls back to the ASP.NET Core HTTPS development certificate
+(`dotnet dev-certs https --trust`). For production deployments always supply a trusted certificate
+or terminate TLS at a service mesh / ingress layer.
 :::
 
 ## Spike / Proof-of-concept status
@@ -258,7 +298,7 @@ implemented and are tracked for future work:
 
 | Feature | Status |
 |---------|--------|
-| TLS / `grpcs://` support | Planned |
+| TLS / `grpcs://` support | ✅ Implemented |
 | Conventional routing (auto-discover endpoints) | Planned |
 | Bi-directional streaming (for higher throughput) | Under consideration |
 | Health check endpoint integration | Planned |

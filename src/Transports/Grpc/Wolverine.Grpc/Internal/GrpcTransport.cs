@@ -15,7 +15,13 @@ public class GrpcTransport : TransportBase<GrpcEndpoint>
 
     private readonly LightweightCache<Uri, GrpcEndpoint> _endpoints;
 
-    public GrpcTransport() : base(ProtocolName, "gRPC Transport", [ProtocolName])
+    public GrpcTransport() : this(ProtocolName) { }
+
+    /// <summary>
+    /// Protected constructor that allows subclasses to register under a different
+    /// URI scheme (e.g. <c>grpcs://</c> for TLS connections).
+    /// </summary>
+    protected GrpcTransport(string protocolName) : base(protocolName, "gRPC Transport", [protocolName])
     {
         _endpoints = new LightweightCache<Uri, GrpcEndpoint>(uri => new GrpcEndpoint(uri, this));
     }
@@ -40,7 +46,7 @@ public class GrpcTransport : TransportBase<GrpcEndpoint>
         return false;
     }
 
-    public GrpcEndpoint EndpointFor(string host, int port)
+    public virtual GrpcEndpoint EndpointFor(string host, int port)
     {
         var uri = GrpcEndpoint.ToUri(host, port);
         return _endpoints[uri];

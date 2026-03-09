@@ -10,6 +10,14 @@ namespace Wolverine.Transports.Grpc.Internal;
 /// Each <see cref="GrpcSenderProtocol"/> instance manages its own
 /// <see cref="GrpcChannel"/> to the configured destination.
 /// </summary>
+/// <remarks>
+/// The HTTP scheme used for the underlying gRPC channel is derived from the
+/// Wolverine endpoint URI scheme:
+/// <list type="bullet">
+///   <item><description><c>grpc://</c> → <c>http://</c> (plain HTTP/2)</description></item>
+///   <item><description><c>grpcs://</c> → <c>https://</c> (TLS)</description></item>
+/// </list>
+/// </remarks>
 public sealed class GrpcSenderProtocol : ISenderProtocol, IDisposable
 {
     private readonly Uri _destination;
@@ -17,14 +25,20 @@ public sealed class GrpcSenderProtocol : ISenderProtocol, IDisposable
     private readonly GrpcChannel _channel;
     private readonly WolverineGrpc.WolverineGrpcClient _client;
 
+    /// <summary>The HTTP/HTTPS address used for the underlying gRPC channel.</summary>
+    internal string ChannelAddress { get; }
+
     public GrpcSenderProtocol(Uri destination, ILogger<GrpcSenderProtocol> logger)
     {
         _destination = destination;
         _logger = logger;
 
-        // Build an http:// address for the gRPC channel from the wolverine grpc:// URI.
-        var address = $"http://{destination.Host}:{destination.Port}";
-        _channel = GrpcChannel.ForAddress(address);
+        // Map grpc:// → http:// and grpcs:// → https:// so the underlying
+        // gRPC channel uses the correct transport security.
+        var httpScheme = destination.Scheme == GrpcSecureTransport.ProtocolName ? "https" : "http";
+        ChannelAddress = $"{httpScheme}://{destination.Host}:{destination.Port}";
+
+        _channel = GrpcChannel.ForAddress(ChannelAddress);
         _client = new WolverineGrpc.WolverineGrpcClient(_channel);
     }
 
