@@ -197,6 +197,7 @@ const config: UserConfig<DefaultTheme.Config> = {
                                 {text: 'NATS', link: '/guide/messaging/transports/nats'},
                                 {text: 'Kafka', link: '/guide/messaging/transports/kafka'},
                                 {text: 'SignalR', link: '/guide/messaging/transports/signalr'},
+                                {text: 'gRPC', link: '/guide/messaging/transports/grpc'},
                                 {text: 'Redis', link: '/guide/messaging/transports/redis'},
                                 {text: 'External Database Tables', link: '/guide/messaging/transports/external-tables'}
                             ]
